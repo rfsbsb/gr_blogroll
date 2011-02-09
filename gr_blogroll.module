@@ -41,32 +41,46 @@ function gr_blogroll_block($op = 'list', $delta = 0) {
     $block[0]['info'] = t('Blogroll');
   }
   elseif ($op == 'view') {
-	  $items = _gr_blogroll_parse_url();
+    $items = _gr_blogroll_parse_url();
     if (user_access('access content') && sizeof($items) > 0 ) {
-	    $block['subject'] = t('My Blogroll');
-	    $block['content'] = theme('item_list',$items,NULL,'ul',array("id"=>"blogroll"));
+      $block['subject'] = t('My Blogroll');
+      $block['content'] = theme('item_list',$items,NULL,'ul',array("id"=>"blogroll"));
     }
   }
   return $block;
 }
 
+/*
+  Implementation of hook_cron()
+  This function is used to clear and rebuild the blogroll in cache.
+*/
+function gr_blogroll_cron() {
+  cache_clear_all("gr_blogroll_data","cache");
+  _gr_blogroll_parse_url();
+}
+
+/*
+  Parse the URL and load the right blogroll from Google Reader
+  This function caches the blogroll every time it runs, to save bandwidth and page requests
+*/
 function _gr_blogroll_parse_url() {
   $url = variable_get('gr_blogroll_url', false);
-  $items = array();
-  if ($url){
-     $url_token = str_replace("http://www.google.com/reader/shared/","",urldecode($url));
-     $json_url = "http://www.google.com/reader/public/javascript-sub/".$url_token;
+  $cache = cache_get("gr_blogroll_data");
+  $items = $cache ? $cache->data : null;
 
-     $file  = drupal_http_request($json_url);
-     $json = json_decode($file->data);
+  if ($url && !$items){
+    $url_token = preg_replace("/http(s)?:\/\/(www.)?google.com\/reader\/shared\//","",urldecode($url));
+    $json_url = "http://www.google.com/reader/public/javascript-sub/".$url_token;
+    $file  = drupal_http_request($json_url);
+    $json = json_decode($file->data);
     
-     $json_items = $json->items;
-		 if (sizeof($json_items) > 0) {
-	     foreach($json_items as $key=>$item) {
-	       $items[] = l($item->title,trim($item->alternate->href),array('title'=>$item->title),null,null,false,true);
-	     }
-			
-	   }
+    $json_items = $json->items;
+    if (sizeof($json_items) > 0) {
+      foreach($json_items as $key=>$item) {
+        $items[] = l($item->title,trim($item->alternate->href),array('title'=>$item->title),null,null,false,true);
+      }
+    }
+    cache_set("gr_blogroll_data",$items);
   }
   return $items;
 }
