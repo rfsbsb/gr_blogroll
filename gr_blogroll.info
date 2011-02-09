@@ -1,0 +1,3 @@
+name = Google Reader Blogroll
+description = A configurable Block containing your blogroll from Google Reader
+core = 6.x
