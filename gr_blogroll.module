@@ -10,7 +10,7 @@
  * Implementation of hook_menu().
  */
 function gr_blogroll_menu() {
-    $items['admin/settings/blogroll'] = array(
+    $items['admin/config/services/blogroll'] = array(
       'title' => t('Blogroll'),
       'page callback' => 'drupal_get_form',
       'page arguments' => array('gr_blogroll_admin_settings'),
@@ -35,18 +35,23 @@ function gr_blogroll_admin_settings() {
  *
  * Display your blogroll from Google Reader
  */
-function gr_blogroll_block($op = 'list', $delta = 0) {
+function gr_blogroll_block_info() {
+  $block['recent']['info'] = t('Blogroll');
+  $block['recent']['properties']['administrative'] = TRUE;
+  return $block;
+}
+
+function gr_blogroll_block_view($delta = '') {
   global $user;
-  if ($op == 'list') {
-    $block[0]['info'] = t('Blogroll');
-  }
-  elseif ($op == 'view') {
+
+  if (user_access('access content')){
     $items = _gr_blogroll_parse_url();
-    if (user_access('access content') && sizeof($items) > 0 ) {
+    if (sizeof($items) > 0 ) {
       $block['subject'] = t('My Blogroll');
-      $block['content'] = theme('item_list',$items,NULL,'ul',array("id"=>"blogroll"));
+      $block['content'] = theme('item_list',array('items'=>$items,'type'=>'ul','attributes'=>array("id"=>"blogroll")) );
     }
   }
+
   return $block;
 }
 
