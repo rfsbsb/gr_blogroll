@@ -31,15 +31,21 @@ function gr_blogroll_admin_settings() {
 }
 
 /**
- * Implementation of hook_block().
+ * Implementation of hook_block_info().
  *
- * Display your blogroll from Google Reader
+ * Showing the block for selecting blogroll on block page
  */
 function gr_blogroll_block_info() {
   $block['recent']['info'] = t('Blogroll');
   $block['recent']['properties']['administrative'] = TRUE;
   return $block;
 }
+
+/**
+ * Implementation of hook_block_view().
+ *
+ * Rendering the block on region
+ */
 
 function gr_blogroll_block_view($delta = '') {
   global $user;
